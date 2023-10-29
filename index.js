@@ -60,6 +60,17 @@ async function run() {
             res.send({ token })
         })
 
+        // Warning: use verifyJWT before using verifyAdmin
+        const verifyAdmin = async (req, res, next) => {
+            const email = req.decoded.email;
+            const query = { email: email }
+            const user = await usersCollection.findOne(query);
+            if (user?.role !== 'admin') {
+                return res.status(403).send({ error: true, message: 'forbidden message' });
+            }
+            next();
+        }
+
         //users related apis
         app.get('/users', async (req, res) => {
             const result = await usersCollection.find().toArray();
@@ -131,6 +142,20 @@ async function run() {
             const result = await categoriesCollection.find().toArray();
             res.send(result)
         })
+
+        app.post('/categories', async (req, res) => {
+            const newItem = req.body;
+            const result = await categoriesCollection.insertOne(newItem)
+            res.send(result);
+        })
+
+        app.delete('/categories/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) }
+            const result = await categoriesCollection.deleteOne(query);
+            res.send(result);
+        })
+
 
         //review related apis
         app.get('/reviews', async (req, res) => {
